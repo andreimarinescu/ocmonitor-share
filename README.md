@@ -3,7 +3,7 @@
 [![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Professional-grade CLI tool for monitoring and analyzing OpenCode AI coding sessions.**
+**OpenCode Monitor is a CLI tool for monitoring and analyzing OpenCode AI coding sessions.**
 
 Transform your OpenCode usage data into beautiful, actionable insights with comprehensive analytics, real-time monitoring, and professional reporting capabilities.
 
@@ -85,18 +85,6 @@ ocmonitor export sessions ~/.local/share/opencode/storage/message --format csv
 - **Usage Reporting** - Generate professional reports for stakeholders
 - **Cost Attribution** - Track AI costs by project or team
 
-## 🤖 Supported AI Models
-
-| Model | Input Cost | Output Cost | Context Window |
-|-------|------------|-------------|----------------|
-| Claude Sonnet 4 (2025-05-14) | $3/1M | $15/1M | 200k |
-| Claude Opus 4 | $15/1M | $75/1M | 200k |
-| Claude Opus 4.1 | $15/1M | $75/1M | 200k |
-| Grok Code | **FREE** | **FREE** | 256k |
-| Qwen3 Coder | **FREE** | **FREE** | 256k |
-| Z-AI GLM 4.5 Air | **FREE** | **FREE** | 128k |
-
-*New models can be easily added by editing the `models.json` configuration file.*
 
 ## 📊 Example Output
 
@@ -108,14 +96,7 @@ ocmonitor export sessions ~/.local/share/opencode/storage/message --format csv
 
 *Click image to view full-size screenshot of sessions summary output*
 
-**Text Output Example:**
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃                                     📊 Sessions Summary                                      ┃
-┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-📈 Total Cost: $12.45    📊 Total Sessions: 15    ⏱️  Avg Duration: 18m 32s
-```
 
 ### Live Monitoring Commands
 
@@ -148,15 +129,6 @@ ocmonitor live ~/.local/share/opencode/storage/message --refresh 10
 
 *Click image to view full-size screenshot of model usage analytics*
 
-**Text Output Example:**
-```
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┓
-┃ Model                  ┃ Sessions     ┃ Total Cost   ┃ Avg Cost     ┃ Usage %      ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━┩
-│ claude-sonnet-4        │ 12           │ $8.32        │ $0.69        │ 66.8%        │
-│ claude-opus-4          │ 3            │ $4.13        │ $1.38        │ 33.2%        │
-└────────────────────────┴──────────────┴──────────────┴──────────────┴──────────────┘
-```
 
 ## ⚙️ Configuration
 
