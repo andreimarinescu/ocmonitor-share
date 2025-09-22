@@ -1,0 +1,82 @@
+{
+  "claude-sonnet-4-20250514": {
+    "input": 3.00,
+    "output": 15.00,
+    "cacheWrite": 3.75,
+    "cacheRead": 0.30,
+    "contextWindow": 200000,
+    "sessionQuota": 6.00
+  },
+  "claude-opus-4": {
+    "input": 15.00,
+    "output": 75.00,
+    "cacheWrite": 18.75,
+    "cacheRead": 1.50,
+    "contextWindow": 200000,
+    "sessionQuota": 10.00
+  },
+  "claude-opus-4.1": {
+    "input": 15.00,
+    "output": 75.00,
+    "cacheWrite": 18.75,
+    "cacheRead": 1.50,
+    "contextWindow": 200000,
+    "sessionQuota": 10.00
+  },
+  "grok-code": {
+    "input": 0.00,
+    "output": 0.00,
+    "cacheWrite": 0.00,
+    "cacheRead": 0.00,
+    "contextWindow": 256000,
+    "sessionQuota": 0.00
+  },
+  "qwen3-coder": {
+    "input": 0.00,
+    "output": 0.00,
+    "cacheWrite": 0.00,
+    "cacheRead": 0.00,
+    "contextWindow": 256000,
+    "sessionQuota": 0.00
+  },
+  "qwen/qwen3-coder": {
+    "input": 0.00,
+    "output": 0.00,
+    "cacheWrite": 0.00,
+    "cacheRead": 0.00,
+    "contextWindow": 256000,
+    "sessionQuota": 0.00
+  },
+    "GPT-5": {
+    "input": 1.25,
+    "output": 10.00,
+    "cacheWrite": 0.125,
+    "cacheRead": 0.00,
+    "contextWindow": 400000,
+    "sessionQuota": 0.00
+  },
+  "kimi-k2": {
+    "input": 0.60,
+    "output": 2.50,
+    "cacheWrite": 0.00,
+    "cacheRead": 0.00,
+    "contextWindow": 256000,
+    "sessionQuota": 0.00
+  },
+  "z-ai/glm-4.5-air": {
+    "input": 0.00,
+    "output": 0.00,
+    "cacheWrite": 0.00,
+    "cacheRead": 0.00,
+    "contextWindow": 128000,
+    "sessionQuota": 0.00
+  },
+    "z-ai/glm-4.5": {
+    "input": 0.60,
+    "output": 2.20,
+    "cacheWrite": 0.11,
+    "cacheRead": 0.00,
+    "contextWindow": 131000,
+    "sessionQuota": 0.00
+  }
+}
