@@ -7,6 +7,7 @@
 
 Transform your OpenCode usage data into beautiful, actionable insights with comprehensive analytics, real-time monitoring, and professional reporting capabilities.
 
+[![Sessions Summary Screenshot](screenshots/sessions-summary.png)](screenshots/sessions-summary.png)
 
 ## 🌟 Features
 
