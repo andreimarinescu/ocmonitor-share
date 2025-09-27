@@ -351,8 +351,49 @@ def models(ctx: click.Context, path: Optional[str], timeframe: str,
 
 
 @cli.command()
+@click.argument('path', type=click.Path(exists=True), required=False)
+@click.option('--timeframe', type=click.Choice(['daily', 'weekly', 'monthly', 'all']),
+              default='all', help='Timeframe for analysis')
+@click.option('--start-date', type=str, help='Start date (YYYY-MM-DD)')
+@click.option('--end-date', type=str, help='End date (YYYY-MM-DD)')
+@click.option('--format', '-f', 'output_format',
+              type=click.Choice(['table', 'json', 'csv']),
+              default='table', help='Output format')
+@click.pass_context
+def projects(ctx: click.Context, path: Optional[str], timeframe: str,
+           start_date: Optional[str], end_date: Optional[str], output_format: str):
+    """Show project usage breakdown and statistics.
+
+    PATH: Path to directory containing session folders
+          (defaults to configured messages directory)
+    """
+    config = ctx.obj['config']
+
+    if not path:
+        path = config.paths.messages_dir
+
+    try:
+        report_generator = ctx.obj['report_generator']
+        result = report_generator.generate_projects_report(
+            path, timeframe, start_date, end_date, output_format
+        )
+
+        if output_format == 'json':
+            click.echo(json.dumps(result, indent=2, default=json_serializer))
+        elif output_format == 'csv':
+            click.echo("CSV data would be exported to file. Use 'export' command for file output.")
+
+    except Exception as e:
+        error_msg = create_user_friendly_error(e)
+        click.echo(f"Error generating project breakdown: {error_msg}", err=True)
+        if ctx.obj['verbose']:
+            click.echo(f"Details: {str(e)}", err=True)
+        ctx.exit(1)
+
+
+@cli.command()
 @click.argument('report_type', type=click.Choice([
-    'session', 'sessions', 'daily', 'weekly', 'monthly', 'models'
+    'session', 'sessions', 'daily', 'weekly', 'monthly', 'models', 'projects'
 ]))
 @click.argument('path', type=click.Path(exists=True), required=False)
 @click.option('--format', '-f', 'export_format',
@@ -383,6 +424,7 @@ def export(ctx: click.Context, report_type: str, path: Optional[str],
         export_service = ctx.obj['export_service']
 
         # Generate report data
+        report_data = None
         if report_type == 'session':
             report_data = report_generator.generate_single_session_report(path, 'json')
         elif report_type == 'sessions':
@@ -395,6 +437,8 @@ def export(ctx: click.Context, report_type: str, path: Optional[str],
             report_data = report_generator.generate_monthly_report(path, None, 'table')  # Use 'table' to get raw data
         elif report_type == 'models':
             report_data = report_generator.generate_models_report(path, 'all', None, None, 'table')  # Use 'table' to get raw data
+        elif report_type == 'projects':
+            report_data = report_generator.generate_projects_report(path, 'all', None, None, 'table')  # Use 'table' to get raw data
 
         if not report_data:
             click.echo("No data to export.", err=True)

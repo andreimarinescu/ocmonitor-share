@@ -9,7 +9,7 @@ from decimal import Decimal
 from ..models.session import SessionData, InteractionFile, TokenUsage
 from ..models.analytics import (
     DailyUsage, WeeklyUsage, MonthlyUsage, ModelUsageStats,
-    ModelBreakdownReport, TimeframeAnalyzer
+    ModelBreakdownReport, ProjectBreakdownReport, TimeframeAnalyzer
 )
 from ..utils.file_utils import FileProcessor
 from ..utils.time_utils import TimeUtils
@@ -166,6 +166,25 @@ class SessionAnalyzer:
             ModelBreakdownReport object
         """
         return TimeframeAnalyzer.create_model_breakdown(
+            sessions, self.pricing_data, timeframe, start_date, end_date
+        )
+
+    def create_project_breakdown(self, sessions: List[SessionData],
+                               timeframe: str = "all",
+                               start_date: Optional[date] = None,
+                               end_date: Optional[date] = None) -> ProjectBreakdownReport:
+        """Create project usage breakdown.
+
+        Args:
+            sessions: List of sessions to analyze
+            timeframe: Timeframe for analysis ("all", "daily", "weekly", "monthly")
+            start_date: Start date filter
+            end_date: End date filter
+
+        Returns:
+            ProjectBreakdownReport object
+        """
+        return TimeframeAnalyzer.create_project_breakdown(
             sessions, self.pricing_data, timeframe, start_date, end_date
         )
 

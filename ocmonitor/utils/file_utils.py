@@ -84,6 +84,78 @@ class FileProcessor:
         return model_id
 
     @staticmethod
+    def extract_project_name(path_str: str) -> str:
+        """Extract project name from a file path.
+        
+        Args:
+            path_str: Full path string (e.g., '/Users/shelli/Documents/apps/ocmonitor')
+            
+        Returns:
+            Project name (last directory in path) or 'Unknown' if empty
+        """
+        if not path_str:
+            return "Unknown"
+        
+        path = Path(path_str)
+        return path.name if path.name else "Unknown"
+
+    @staticmethod
+    def get_opencode_storage_path() -> Optional[Path]:
+        """Get the OpenCode storage path.
+        
+        Returns:
+            Path to OpenCode storage directory or None if not found
+        """
+        # Try to get from configuration first
+        try:
+            from ..config import config_manager
+            storage_path = Path(config_manager.config.paths.opencode_storage_dir)
+            if storage_path.exists():
+                return storage_path
+        except ImportError:
+            pass
+        
+        # Standard OpenCode storage location as fallback
+        home = Path.home()
+        storage_path = home / ".local" / "share" / "opencode" / "storage"
+        
+        if storage_path.exists():
+            return storage_path
+        
+        return None
+
+    @staticmethod
+    def find_session_title(session_id: str) -> Optional[str]:
+        """Find and load session title from OpenCode storage.
+        
+        Args:
+            session_id: Session ID to search for
+            
+        Returns:
+            Session title or None if not found
+        """
+        storage_path = FileProcessor.get_opencode_storage_path()
+        if not storage_path:
+            return None
+        
+        session_storage = storage_path / "session"
+        if not session_storage.exists():
+            return None
+        
+        # Search through all project directories
+        for project_dir in session_storage.iterdir():
+            if not project_dir.is_dir() or project_dir.name == "global":
+                continue
+            
+            session_file = project_dir / f"{session_id}.json"
+            if session_file.exists():
+                session_data = FileProcessor.load_json_file(session_file)
+                if session_data and "title" in session_data:
+                    return session_data["title"]
+        
+        return None
+
+    @staticmethod
     def parse_interaction_file(file_path: Path, session_id: str) -> Optional[InteractionFile]:
         """Parse a single interaction JSON file.
 
@@ -125,12 +197,20 @@ class FileProcessor:
                     completed=time_info.get('completed')
                 )
 
+            # Extract project path data
+            project_path = None
+            if 'path' in data:
+                path_info = data['path']
+                # Use 'cwd' as the project path, fallback to 'root' if needed
+                project_path = path_info.get('cwd') or path_info.get('root')
+
             return InteractionFile(
                 file_path=file_path,
                 session_id=session_id,
                 model_id=model_id,
                 tokens=tokens,
                 time_data=time_data,
+                project_path=project_path,
                 raw_data=data
             )
 
@@ -167,10 +247,14 @@ class FileProcessor:
         if not interaction_files:
             return None
 
+        # Load session title from OpenCode storage
+        session_title = FileProcessor.find_session_title(session_id)
+
         return SessionData(
             session_id=session_id,
             session_path=session_path,
-            files=interaction_files
+            files=interaction_files,
+            session_title=session_title
         )
 
     @staticmethod

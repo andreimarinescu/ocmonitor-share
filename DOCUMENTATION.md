@@ -4,6 +4,8 @@ Welcome to the complete documentation for OpenCode Monitor, a powerful CLI tool 
 
 > **📸 Screenshots**: Throughout this documentation, you'll find clickable screenshot references that show actual command outputs. These screenshots are located in the `screenshots/` directory. To add your own screenshots, replace the placeholder PNG files with actual screenshots of your terminal output.
 
+**🆕 Recent Updates**: This documentation reflects the latest improvements including professional UI redesign, project analytics, session time tracking, and enhanced live dashboard features.
+
 ## 📖 Table of Contents
 
 1. [Installation](#installation)
@@ -73,6 +75,36 @@ ocmonitor --help
 
 # Test with sample data
 ocmonitor sessions test_sessions/
+```
+
+### Configuration Setup
+
+After installation, set up your personal configuration:
+
+```bash
+# Create configuration directory
+mkdir -p ~/.config/ocmonitor
+
+# Copy default configuration (if available in project)
+cp config.toml ~/.config/ocmonitor/config.toml
+
+# Or create a new configuration file
+touch ~/.config/ocmonitor/config.toml
+
+# Edit your configuration
+nano ~/.config/ocmonitor/config.toml
+```
+
+Your configuration file should contain:
+```toml
+[paths]
+messages_dir = "~/.local/share/opencode/storage/message"
+export_dir = "./exports"
+
+[ui]
+table_style = "rich"
+progress_bars = true
+colors = true
 ```
 
 ### PATH Configuration (If Needed)
@@ -232,6 +264,45 @@ ocmonitor models ~/.local/share/opencode/storage/message --format json
 
 *Click image to view full-size screenshot of model usage analytics*
 
+#### `ocmonitor projects <path>`
+Analyze AI usage costs and token consumption by coding project.
+
+```bash
+# Project usage breakdown
+ocmonitor projects ~/.local/share/opencode/storage/message
+
+# Filter by date range
+ocmonitor projects ~/.local/share/opencode/storage/message --start-date 2024-01-01 --end-date 2024-01-31
+
+# JSON format for detailed analysis
+ocmonitor projects ~/.local/share/opencode/storage/message --format json
+
+# CSV format for spreadsheet analysis
+ocmonitor projects ~/.local/share/opencode/storage/message --format csv
+```
+
+**Features:**
+- 📊 **Project Breakdown** - Shows sessions, interactions, tokens, and costs per project
+- 📈 **Summary Statistics** - Total projects, sessions, interactions, tokens, and cost
+- 📅 **Activity Tracking** - First and last activity dates for each project
+- 🤖 **Model Usage** - Lists AI models used for each project
+- 📤 **Export Support** - Full export capabilities with detailed metadata
+
+**Example Output:**
+```
+                             Project Usage Breakdown
+┏━━━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━┓
+┃ Project   ┃ Sessions ┃ Interactions ┃ Total Tokens ┃    Cost ┃ Models Used     ┃
+┡━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━┩
+│ ocmonitor │        5 │           12 │       25,340 │ $0.0512 │ claude-sonnet-… │
+│ myapp     │        3 │            8 │       18,200 │ $0.0364 │ claude-opus-4   │
+│ website   │        2 │            4 │        8,150 │ $0.0163 │ grok-code       │
+└───────────┴──────────┴──────────────┴──────────────┴─────────┴─────────────────┘
+╭────────────────────────────────── Summary ───────────────────────────────────╮
+│ Total: 3 projects, 10 sessions, 24 interactions, 51,690 tokens, $0.10        │
+╰──────────────────────────────────────────────────────────────────────────────╯
+```
+
 
 
 ### 4. Live Monitoring Commands
@@ -248,11 +319,14 @@ ocmonitor live ~/.local/share/opencode/storage/message --refresh 10
 ```
 
 **Features:**
-- 🔄 Auto-refreshing display
-- 📊 Real-time cost tracking
-- ⏱️ Live session duration
-- 📈 Token usage updates
-- 🚦 Color-coded status indicators
+- 🔄 Auto-refreshing display with professional UI redesign
+- 📊 Real-time cost tracking with progress indicators  
+- ⏱️ Live session duration with 5-hour progress bar and color-coded time alerts
+- 📈 Token usage updates and context window monitoring
+- 🚦 Color-coded status indicators (green/orange/yellow/red based on time elapsed)
+- 📂 Project name display for better context awareness
+- 📝 Human-readable session titles replacing cryptic session IDs
+- 🎨 Clean, professional styling with optimal space utilization
 
 [![Live Dashboard Screenshot](screenshots/live_dashboard.png)](screenshots/live_dashboard.png)
 
@@ -262,13 +336,35 @@ ocmonitor live ~/.local/share/opencode/storage/message --refresh 10
 
 ## ⚙️ Configuration
 
+### Configuration File Setup
+
+OpenCode Monitor uses a configuration file located at: **`~/.config/ocmonitor/config.toml`**
+
+#### Create Configuration File
+
+```bash
+# Create the configuration directory
+mkdir -p ~/.config/ocmonitor
+
+# Create your configuration file
+touch ~/.config/ocmonitor/config.toml
+```
+
+#### Configuration File Search Order
+
+OpenCode Monitor searches for configuration files in this order:
+1. **`~/.config/ocmonitor/config.toml`** (recommended user location)
+2. `config.toml` (current working directory)
+3. `ocmonitor.toml` (current working directory)
+4. Project directory fallback
+
 ### Setting Custom Message Path
 
 OpenCode Monitor can be configured to use custom paths for your message data.
 
 #### Method 1: Edit Configuration File
 
-Edit the `config.toml` file:
+Edit your `~/.config/ocmonitor/config.toml` file:
 
 ```toml
 [paths]
@@ -301,7 +397,7 @@ ocmonitor sessions /custom/path/to/messages
 
 ### Full Configuration Options
 
-Here's a complete `config.toml` with all available options:
+Here's a complete `~/.config/ocmonitor/config.toml` with all available options:
 
 ```toml
 # OpenCode Monitor Configuration
@@ -362,21 +458,30 @@ Models are defined in the `models.json` file. Each model includes pricing and te
 ```json
 {
   "claude-sonnet-4-20250514": {
-    "input_cost_per_million": 3.0,
-    "output_cost_per_million": 15.0,
-    "context_window": 200000,
+    "input": 3.0,
+    "output": 15.0,
+    "cacheWrite": 3.75,
+    "cacheRead": 0.30,
+    "contextWindow": 200000,
+    "sessionQuota": 6.00,
     "description": "Claude Sonnet 4 (2025-05-14)"
   },
   "claude-opus-4": {
-    "input_cost_per_million": 15.0,
-    "output_cost_per_million": 75.0,
-    "context_window": 200000,
+    "input": 15.0,
+    "output": 75.0,
+    "cacheWrite": 18.75,
+    "cacheRead": 1.50,
+    "contextWindow": 200000,
+    "sessionQuota": 10.00,
     "description": "Claude Opus 4"
   },
   "grok-code": {
-    "input_cost_per_million": 0.0,
-    "output_cost_per_million": 0.0,
-    "context_window": 256000,
+    "input": 0.0,
+    "output": 0.0,
+    "cacheWrite": 0.0,
+    "cacheRead": 0.0,
+    "contextWindow": 256000,
+    "sessionQuota": 0.0,
     "description": "Grok Code (Free)"
   }
 }
@@ -393,16 +498,22 @@ Add your new model to the `models.json` file:
   "existing-models": "...",
   
   "new-ai-model": {
-    "input_cost_per_million": 5.0,
-    "output_cost_per_million": 25.0,
-    "context_window": 128000,
+    "input": 5.0,
+    "output": 25.0,
+    "cacheWrite": 6.25,
+    "cacheRead": 0.50,
+    "contextWindow": 128000,
+    "sessionQuota": 15.0,
     "description": "New AI Model"
   },
   
   "another-model": {
-    "input_cost_per_million": 0.0,
-    "output_cost_per_million": 0.0,
-    "context_window": 100000,
+    "input": 0.0,
+    "output": 0.0,
+    "cacheWrite": 0.0,
+    "cacheRead": 0.0,
+    "contextWindow": 100000,
+    "sessionQuota": 0.0,
     "description": "Another Free Model"
   }
 }
@@ -427,15 +538,21 @@ For models with provider prefixes (like `provider/model-name`), add both version
 ```json
 {
   "provider/model-name": {
-    "input_cost_per_million": 2.0,
-    "output_cost_per_million": 10.0,
-    "context_window": 150000,
+    "input": 2.0,
+    "output": 10.0,
+    "cacheWrite": 2.5,
+    "cacheRead": 0.20,
+    "contextWindow": 150000,
+    "sessionQuota": 8.0,
     "description": "Provider Model"
   },
   "model-name": {
-    "input_cost_per_million": 2.0,
-    "output_cost_per_million": 10.0,
-    "context_window": 150000,
+    "input": 2.0,
+    "output": 10.0,
+    "cacheWrite": 2.5,
+    "cacheRead": 0.20,
+    "contextWindow": 150000,
+    "sessionQuota": 8.0,
     "description": "Provider Model (short name)"
   }
 }
@@ -445,22 +562,70 @@ For models with provider prefixes (like `provider/model-name`), add both version
 
 | Field | Description | Required | Example |
 |-------|-------------|----------|---------|
-| `input_cost_per_million` | Cost per 1M input tokens (USD) | ✅ | `3.0` |
-| `output_cost_per_million` | Cost per 1M output tokens (USD) | ✅ | `15.0` |
-| `context_window` | Maximum context window size | ✅ | `200000` |
-| `description` | Human-readable model name | ✅ | `"Claude Sonnet 4"` |
+| `input` | Cost per 1M input tokens (USD) | ✅ | `3.0` |
+| `output` | Cost per 1M output tokens (USD) | ✅ | `15.0` |
+| `cacheWrite` | Cost per 1M cache write tokens (USD) | ✅ | `3.75` |
+| `cacheRead` | Cost per 1M cache read tokens (USD) | ✅ | `0.30` |
+| `contextWindow` | Maximum context window size | ✅ | `200000` |
+| `sessionQuota` | Maximum session cost quota (USD) | ✅ | `6.00` |
+| `description` | Human-readable model name | ❌ | `"Claude Sonnet 4"` |
+
+### Field Details
+
+- **`input`**: Base cost for processing input tokens (prompt tokens)
+- **`output`**: Cost for generating output tokens (response tokens)  
+- **`cacheWrite`**: Cost for writing tokens to cache (context caching feature)
+- **`cacheRead`**: Cost for reading tokens from cache (much cheaper than input)
+- **`contextWindow`**: Maximum number of tokens the model can process in one request
+- **`sessionQuota`**: Maximum cost limit per session (0 = no limit)
+- **`description`**: Optional human-readable name for display purposes
 
 ### Free Models
 
-For free models, set costs to `0.0`:
+For free models, set all costs to `0.0`:
 
 ```json
 {
   "free-model": {
-    "input_cost_per_million": 0.0,
-    "output_cost_per_million": 0.0,
-    "context_window": 100000,
+    "input": 0.0,
+    "output": 0.0,
+    "cacheWrite": 0.0,
+    "cacheRead": 0.0,
+    "contextWindow": 100000,
+    "sessionQuota": 0.0,
     "description": "Free AI Model"
+  }
+}
+```
+
+### Pricing Examples
+
+#### Premium Model (with caching support)
+```json
+{
+  "anthropic.claude-sonnet-4-20250514-v1:0": {
+    "input": 3.0,
+    "output": 15.0,
+    "cacheWrite": 3.75,
+    "cacheRead": 0.30,
+    "contextWindow": 1000000,
+    "sessionQuota": 10.0,
+    "description": "Claude Sonnet 4 (2025-05-14)"
+  }
+}
+```
+
+#### Basic Model (no caching)
+```json
+{
+  "gpt-4o": {
+    "input": 2.50,
+    "output": 10.0,
+    "cacheWrite": 0.0,
+    "cacheRead": 0.0,
+    "contextWindow": 128000,
+    "sessionQuota": 0.0,
+    "description": "GPT-4o"
   }
 }
 ```
@@ -477,7 +642,7 @@ Quotas help you monitor and control your AI usage costs by setting spending limi
 
 #### Method 1: Configuration File
 
-Edit `config.toml` to set quota limits:
+Edit `~/.config/ocmonitor/config.toml` to set quota limits:
 
 ```toml
 [quotas]
@@ -652,6 +817,19 @@ ocmonitor export models ~/.local/share/opencode/storage/message --format csv --o
 ocmonitor export models ~/.local/share/opencode/storage/message --format json --include-metadata
 ```
 
+#### 6. Project Usage Export
+
+```bash
+# Export project breakdown
+ocmonitor export projects ~/.local/share/opencode/storage/message --format csv --output project_usage.csv
+
+# JSON format with detailed metadata
+ocmonitor export projects ~/.local/share/opencode/storage/message --format json --include-metadata
+
+# Filter by date range
+ocmonitor export projects ~/.local/share/opencode/storage/message --start-date 2024-01-01 --end-date 2024-01-31 --format csv
+```
+
 ### Export Options
 
 | Option | Description | Example |
@@ -664,6 +842,9 @@ ocmonitor export models ~/.local/share/opencode/storage/message --format json --
 | `--months` | Number of months to include | `--months 6` |
 | `--include-metadata` | Include additional metadata | `--include-metadata` |
 | `--include-raw-data` | Include raw session data | `--include-raw-data` |
+| `--start-date` | Start date for filtering (YYYY-MM-DD) | `--start-date 2024-01-01` |
+| `--end-date` | End date for filtering (YYYY-MM-DD) | `--end-date 2024-01-31` |
+| `--timeframe` | Predefined timeframe filter | `--timeframe weekly` |
 
 ### CSV Export Example
 
@@ -938,17 +1119,17 @@ ocmonitor config paths
 ```
 📁 Configuration File Locations:
 
-Main Configuration:
+Primary Configuration:
+   File: ~/.config/ocmonitor/config.toml
+   Status: ✅ Found (recommended location)
+
+Project Configuration:
    File: ./config.toml
-   Status: ✅ Found
+   Status: ❌ Not found (optional)
 
 Models Configuration:
    File: ./models.json
    Status: ✅ Found
-
-User Configuration (if exists):
-   File: ~/.config/ocmonitor/config.toml
-   Status: ❌ Not found
 
 Environment Overrides:
    OCMONITOR_MESSAGES_DIR: not set
@@ -1299,11 +1480,19 @@ ocmonitor export sessions ~/.local/share/opencode/storage/message \
     --include-raw-data \
     --output sessions.json
 
+# Export project data for analysis
+ocmonitor export projects ~/.local/share/opencode/storage/message \
+    --format json \
+    --include-metadata \
+    --output projects.json
+
 # Process with jq
 cat sessions.json | jq '.sessions[] | select(.total_cost > 5.0)'
+cat projects.json | jq '.projects[] | select(.cost > 10.0)'
 
 # Import into database (example)
 python3 scripts/import_to_db.py sessions.json
+python3 scripts/import_projects_to_db.py projects.json
 ```
 
 ### Customization
@@ -1344,15 +1533,17 @@ Create configuration templates for different use cases:
 
 ```bash
 # Development configuration
-cp config.toml config.dev.toml
-# Edit config.dev.toml for development settings
+cp ~/.config/ocmonitor/config.toml ~/.config/ocmonitor/config.dev.toml
+# Edit development settings
+nano ~/.config/ocmonitor/config.dev.toml
 
 # Production configuration  
-cp config.toml config.prod.toml
-# Edit config.prod.toml for production settings
+cp ~/.config/ocmonitor/config.toml ~/.config/ocmonitor/config.prod.toml
+# Edit production settings
+nano ~/.config/ocmonitor/config.prod.toml
 
 # Use specific configuration
-OCMONITOR_CONFIG=config.dev.toml ocmonitor sessions ~/.local/share/opencode/storage/message
+OCMONITOR_CONFIG=~/.config/ocmonitor/config.dev.toml ocmonitor sessions ~/.local/share/opencode/storage/message
 ```
 
 ---

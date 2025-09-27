@@ -58,6 +58,7 @@ class InteractionFile(BaseModel):
     model_id: str = Field(default="unknown")
     tokens: TokenUsage = Field(default_factory=TokenUsage)
     time_data: Optional[TimeData] = Field(default=None)
+    project_path: Optional[str] = Field(default=None, description="Project working directory from OpenCode")
     raw_data: Dict[str, Any] = Field(default_factory=dict)
 
     class Config:
@@ -79,6 +80,14 @@ class InteractionFile(BaseModel):
     def modification_time(self) -> datetime:
         """Get file modification time."""
         return datetime.fromtimestamp(self.file_path.stat().st_mtime)
+
+    @computed_field
+    @property
+    def project_name(self) -> str:
+        """Get project name from project path."""
+        if not self.project_path:
+            return "Unknown"
+        return Path(self.project_path).name if self.project_path else "Unknown"
 
     def calculate_cost(self, pricing_data: Dict[str, Any]) -> Decimal:
         """Calculate cost for this interaction."""
@@ -104,6 +113,7 @@ class SessionData(BaseModel):
     session_id: str
     session_path: Path
     files: List[InteractionFile] = Field(default_factory=list)
+    session_title: Optional[str] = Field(default=None, description="Human-readable session title from OpenCode")
 
     class Config:
         arbitrary_types_allowed = True
@@ -157,6 +167,21 @@ class SessionData(BaseModel):
 
     @computed_field
     @property
+    def duration_hours(self) -> float:
+        """Calculate session duration in hours."""
+        if self.duration_ms:
+            return self.duration_ms / (1000 * 60 * 60)
+        return 0.0
+
+    @computed_field
+    @property
+    def duration_percentage(self) -> float:
+        """Calculate session duration as percentage of 5-hour maximum."""
+        max_hours = 5.0
+        return min(100.0, (self.duration_hours / max_hours) * 100.0)
+
+    @computed_field
+    @property
     def total_processing_time_ms(self) -> int:
         """Calculate total processing time across all files."""
         total = 0
@@ -167,7 +192,8 @@ class SessionData(BaseModel):
 
     def calculate_total_cost(self, pricing_data: Dict[str, Any]) -> Decimal:
         """Calculate total cost for the session."""
-        return sum(file.calculate_cost(pricing_data) for file in self.files)
+        costs = [file.calculate_cost(pricing_data) for file in self.files]
+        return Decimal(sum(costs))
 
     def get_model_breakdown(self, pricing_data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         """Get breakdown of usage and cost by model."""
@@ -203,3 +229,35 @@ class SessionData(BaseModel):
     def non_zero_token_files(self) -> List[InteractionFile]:
         """Get files with non-zero token usage."""
         return [file for file in self.files if file.tokens.total > 0]
+
+    @computed_field
+    @property
+    def project_name(self) -> str:
+        """Get project name for this session based on most common project path."""
+        if not self.files:
+            return "Unknown"
+        
+        # Get project paths from files that have them
+        project_paths = [f.project_path for f in self.files if f.project_path]
+        
+        if not project_paths:
+            return "Unknown"
+        
+        # Use the most common project path (in case there are mixed paths)
+        from collections import Counter
+        most_common_path = Counter(project_paths).most_common(1)[0][0]
+        
+        return Path(most_common_path).name if most_common_path else "Unknown"
+
+    @computed_field
+    @property
+    def display_title(self) -> str:
+        """Get display-friendly session title, with fallback to session ID."""
+        if self.session_title:
+            # Truncate long titles for better display
+            if len(self.session_title) > 50:
+                return self.session_title[:47] + "..."
+            return self.session_title
+        
+        # Fallback to session ID
+        return self.session_id

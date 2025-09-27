@@ -15,18 +15,20 @@ Transform your OpenCode usage data into beautiful, actionable insights with comp
 - **📈 Comprehensive Reports** - Daily, weekly, and monthly usage breakdowns
 - **💰 Cost Tracking** - Accurate cost calculations for multiple AI models
 - **📊 Model Analytics** - Detailed breakdown of usage per AI model
+- **📋 Project Analytics** - Track costs and token usage by coding project
 - **⏱️ Performance Metrics** - Session duration and processing time tracking
 
 ### 🎨 Beautiful User Interface
-- **🌈 Rich Terminal UI** - Colorful tables and panels with perfect alignment
-- **📊 Progress Bars** - Visual indicators for cost quotas and context usage
+- **🌈 Rich Terminal UI** - Professional design with clean styling and optimal space utilization
+- **📊 Progress Bars** - Visual indicators for cost quotas, context usage, and session time
 - **🚥 Color Coding** - Green/yellow/red status indicators based on usage thresholds
-- **📱 Live Dashboard** - Real-time monitoring of your current coding session
+- **📱 Live Dashboard** - Real-time monitoring with project names and session titles
+- **⏰ Session Time Tracking** - 5-hour session progress bar with color-coded time alerts
 
 ### 📤 Data Export & Integration
 - **📋 CSV Export** - Spreadsheet-compatible exports with metadata
 - **🔄 JSON Export** - Machine-readable exports for custom integrations
-- **📊 Multiple Report Types** - Sessions, daily, weekly, monthly, and model reports
+- **📊 Multiple Report Types** - Sessions, daily, weekly, monthly, model, and project reports
 
 ## 🚀 Quick Start
 
@@ -56,6 +58,9 @@ ocmonitor config show
 # Analyze your sessions
 ocmonitor sessions ~/.local/share/opencode/storage/message
 
+# Analyze by project
+ocmonitor projects ~/.local/share/opencode/storage/message
+
 # Real-time monitoring
 ocmonitor live ~/.local/share/opencode/storage/message
 
@@ -72,19 +77,22 @@ ocmonitor export sessions ~/.local/share/opencode/storage/message --format csv
 ## 🎯 Use Cases
 
 ### Individual Developers
-- **Cost Management** - Track your AI usage costs across different models
-- **Usage Optimization** - Identify patterns in your coding sessions
-- **Performance Monitoring** - Monitor session efficiency and token usage
+- **Cost Management** - Track your AI usage costs across different models and projects
+- **Usage Optimization** - Identify patterns in your coding sessions with session time tracking
+- **Performance Monitoring** - Monitor session efficiency and token usage with real-time dashboards
+- **Project Analytics** - Understand which projects consume the most AI resources
 
 ### Development Teams
-- **Team Analytics** - Aggregate usage statistics across team members
-- **Budget Planning** - Forecast AI costs based on usage trends
+- **Team Analytics** - Aggregate usage statistics across team members and projects
+- **Budget Planning** - Forecast AI costs based on usage trends and project breakdowns
 - **Model Comparison** - Compare performance and costs across different AI models
+- **Session Management** - Track coding session durations and productivity patterns
 
 ### Organizations
-- **Resource Planning** - Plan AI resource allocation and budgets
-- **Usage Reporting** - Generate professional reports for stakeholders
-- **Cost Attribution** - Track AI costs by project or team
+- **Resource Planning** - Plan AI resource allocation and budgets by project
+- **Usage Reporting** - Generate professional reports for stakeholders with export capabilities
+- **Cost Attribution** - Track AI costs by project, team, and time period
+- **Quality Monitoring** - Monitor session lengths and usage patterns for optimization
 
 
 ## 📊 Example Output
@@ -114,11 +122,13 @@ ocmonitor live ~/.local/share/opencode/storage/message --refresh 10
 ```
 
 **Features:**
-- 🔄 Auto-refreshing display
-- 📊 Real-time cost tracking
-- ⏱️ Live session duration
-- 📈 Token usage updates
-- 🚦 Color-coded status indicators
+- 🔄 Auto-refreshing display with professional UI design
+- 📊 Real-time cost tracking with progress indicators
+- ⏱️ Live session duration with 5-hour progress bar
+- 📈 Token usage updates and context window monitoring
+- 🚦 Color-coded status indicators and time alerts
+- 📂 Project name display for better context
+- 📝 Human-readable session titles instead of cryptic IDs
 
 [![Live Dashboard Screenshot](screenshots/live_dashboard.png)](screenshots/live_dashboard.png)
 
@@ -133,7 +143,21 @@ ocmonitor live ~/.local/share/opencode/storage/message --refresh 10
 
 ## ⚙️ Configuration
 
-The tool is highly configurable through `config.toml`:
+### Configuration File Location
+
+Create your configuration file at: **`~/.config/ocmonitor/config.toml`**
+
+```bash
+# Create the configuration directory
+mkdir -p ~/.config/ocmonitor
+
+# Create your configuration file
+touch ~/.config/ocmonitor/config.toml
+```
+
+### Configuration Options
+
+The tool is highly configurable through the `config.toml` file:
 
 ```toml
 [paths]
@@ -149,6 +173,11 @@ colors = true
 default_format = "csv"
 include_metadata = true
 ```
+
+**Configuration File Search Order:**
+1. `~/.config/ocmonitor/config.toml` (recommended user location)
+2. `config.toml` (current directory)
+3. Project directory fallback
 
 ## 🛠️ Development
 

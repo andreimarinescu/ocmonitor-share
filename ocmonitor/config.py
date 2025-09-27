@@ -12,9 +12,10 @@ from decimal import Decimal
 class PathsConfig(BaseModel):
     """Configuration for file paths."""
     messages_dir: str = Field(default="/Users/shelli/.local/share/opencode/storage/message")
+    opencode_storage_dir: str = Field(default="~/.local/share/opencode/storage")
     export_dir: str = Field(default="./exports")
 
-    @validator('messages_dir', 'export_dir')
+    @validator('messages_dir', 'opencode_storage_dir', 'export_dir')
     def expand_path(cls, v):
         """Expand user paths and environment variables."""
         return os.path.expanduser(os.path.expandvars(v))

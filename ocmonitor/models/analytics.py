@@ -43,7 +43,7 @@ class DailyUsage(BaseModel):
 
     def calculate_total_cost(self, pricing_data: Dict[str, Any]) -> Decimal:
         """Calculate total cost for the day."""
-        return sum(session.calculate_total_cost(pricing_data) for session in self.sessions)
+        return sum((session.calculate_total_cost(pricing_data) for session in self.sessions), Decimal('0.0'))
 
 
 class WeeklyUsage(BaseModel):
@@ -81,7 +81,7 @@ class WeeklyUsage(BaseModel):
 
     def calculate_total_cost(self, pricing_data: Dict[str, Any]) -> Decimal:
         """Calculate total cost for the week."""
-        return sum(day.calculate_total_cost(pricing_data) for day in self.daily_usage)
+        return sum((day.calculate_total_cost(pricing_data) for day in self.daily_usage), Decimal('0.0'))
 
 
 class MonthlyUsage(BaseModel):
@@ -117,7 +117,7 @@ class MonthlyUsage(BaseModel):
 
     def calculate_total_cost(self, pricing_data: Dict[str, Any]) -> Decimal:
         """Calculate total cost for the month."""
-        return sum(week.calculate_total_cost(pricing_data) for week in self.weekly_usage)
+        return sum((week.calculate_total_cost(pricing_data) for week in self.weekly_usage), Decimal('0.0'))
 
 
 class ModelUsageStats(BaseModel):
@@ -142,7 +142,7 @@ class ModelBreakdownReport(BaseModel):
     @property
     def total_cost(self) -> Decimal:
         """Calculate total cost across all models."""
-        return sum(model.total_cost for model in self.model_stats)
+        return sum((model.total_cost for model in self.model_stats), Decimal('0.0'))
 
     @computed_field
     @property
@@ -167,6 +167,32 @@ class ProjectUsageStats(BaseModel):
     models_used: List[str] = Field(default_factory=list)
     first_activity: Optional[datetime] = Field(default=None)
     last_activity: Optional[datetime] = Field(default=None)
+
+
+class ProjectBreakdownReport(BaseModel):
+    """Model for project usage breakdown report."""
+    timeframe: str  # "daily", "weekly", "monthly", "all"
+    start_date: Optional[date] = Field(default=None)
+    end_date: Optional[date] = Field(default=None)
+    project_stats: List[ProjectUsageStats] = Field(default_factory=list)
+
+    @computed_field
+    @property
+    def total_cost(self) -> Decimal:
+        """Calculate total cost across all projects."""
+        return sum(project.total_cost for project in self.project_stats)
+
+    @computed_field
+    @property
+    def total_tokens(self) -> TokenUsage:
+        """Calculate total tokens across all projects."""
+        total = TokenUsage()
+        for project in self.project_stats:
+            total.input += project.total_tokens.input
+            total.output += project.total_tokens.output
+            total.cache_write += project.total_tokens.cache_write
+            total.cache_read += project.total_tokens.cache_read
+        return total
 
 
 class TimeframeAnalyzer:
@@ -309,4 +335,87 @@ class TimeframeAnalyzer:
             start_date=start_date,
             end_date=end_date,
             model_stats=model_stats
+        )
+
+    @staticmethod
+    def create_project_breakdown(
+        sessions: List[SessionData],
+        pricing_data: Dict[str, Any],
+        timeframe: str = "all",
+        start_date: Optional[date] = None,
+        end_date: Optional[date] = None
+    ) -> 'ProjectBreakdownReport':
+        """Create project usage breakdown."""
+        # Filter sessions by date range if specified
+        filtered_sessions = sessions
+        if start_date or end_date:
+            filtered_sessions = []
+            for session in sessions:
+                if session.start_time:
+                    session_date = session.start_time.date()
+                    if start_date and session_date < start_date:
+                        continue
+                    if end_date and session_date > end_date:
+                        continue
+                    filtered_sessions.append(session)
+
+        project_data = defaultdict(lambda: {
+            'tokens': TokenUsage(),
+            'sessions': 0,
+            'interactions': 0,
+            'cost': Decimal('0.0'),
+            'models_used': set(),
+            'first_activity': None,
+            'last_activity': None
+        })
+
+        for session in filtered_sessions:
+            project_name = session.project_name or "Unknown"
+            project_stats = project_data[project_name]
+            
+            # Update aggregated data
+            session_tokens = session.total_tokens
+            project_stats['tokens'].input += session_tokens.input
+            project_stats['tokens'].output += session_tokens.output
+            project_stats['tokens'].cache_write += session_tokens.cache_write
+            project_stats['tokens'].cache_read += session_tokens.cache_read
+            
+            project_stats['sessions'] += 1
+            project_stats['interactions'] += session.interaction_count
+            project_stats['cost'] += session.calculate_total_cost(pricing_data)
+            project_stats['models_used'].update(session.models_used)
+            
+            # Track first/last activity times
+            if session.start_time:
+                if (project_stats['first_activity'] is None or 
+                    session.start_time < project_stats['first_activity']):
+                    project_stats['first_activity'] = session.start_time
+                    
+            if session.end_time:
+                if (project_stats['last_activity'] is None or 
+                    session.end_time > project_stats['last_activity']):
+                    project_stats['last_activity'] = session.end_time
+
+        # Convert to ProjectUsageStats objects
+        project_stats = []
+        for project_name, stats in project_data.items():
+            project_stats.append(ProjectUsageStats(
+                project_name=project_name,
+                total_tokens=stats['tokens'],
+                total_sessions=stats['sessions'],
+                total_interactions=stats['interactions'],
+                total_cost=stats['cost'],
+                models_used=list(stats['models_used']),
+                first_activity=stats['first_activity'],
+                last_activity=stats['last_activity']
+            ))
+
+        # Sort by total cost descending
+        project_stats.sort(key=lambda x: x.total_cost, reverse=True)
+
+        return ProjectBreakdownReport(
+            timeframe=timeframe,
+            start_date=start_date,
+            end_date=end_date,
+            project_stats=project_stats
         )

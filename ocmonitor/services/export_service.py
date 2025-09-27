@@ -312,6 +312,29 @@ class ExportService:
                 ]
             return []
 
+        elif report_type == "projects":
+            # For projects breakdown, export project data
+            project_breakdown = report_data.get('project_breakdown')
+            if project_breakdown:
+                return [
+                    {
+                        'project_name': project.project_name,
+                        'total_sessions': project.total_sessions,
+                        'total_interactions': project.total_interactions,
+                        'input_tokens': project.total_tokens.input,
+                        'output_tokens': project.total_tokens.output,
+                        'cache_write_tokens': project.total_tokens.cache_write,
+                        'cache_read_tokens': project.total_tokens.cache_read,
+                        'total_tokens': project.total_tokens.total,
+                        'total_cost': float(project.total_cost),
+                        'models_used': ', '.join(project.models_used),
+                        'first_activity': project.first_activity.isoformat() if project.first_activity else None,
+                        'last_activity': project.last_activity.isoformat() if project.last_activity else None
+                    }
+                    for project in project_breakdown.project_stats
+                ]
+            return []
+
         else:
             # For unknown report types, try to return the data as-is
             return report_data

@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from ..models.session import SessionData
-from ..models.analytics import DailyUsage, WeeklyUsage, MonthlyUsage, ModelBreakdownReport
+from ..models.analytics import DailyUsage, WeeklyUsage, MonthlyUsage, ModelBreakdownReport, ProjectBreakdownReport
 from ..ui.tables import TableFormatter
 from ..services.session_analyzer import SessionAnalyzer
 from ..config import ModelPricing
@@ -249,6 +249,51 @@ class ReportGenerator:
 
         return report_data
 
+    def generate_projects_report(self, base_path: str, timeframe: str = "all",
+                               start_date: Optional[str] = None, end_date: Optional[str] = None,
+                               output_format: str = "table") -> Dict[str, Any]:
+        """Generate project usage breakdown report.
+
+        Args:
+            base_path: Path to directory containing sessions
+            timeframe: Timeframe for analysis
+            start_date: Start date (YYYY-MM-DD format)
+            end_date: End date (YYYY-MM-DD format)
+            output_format: Output format ("table", "json", "csv")
+
+        Returns:
+            Report data
+        """
+        sessions = self.analyzer.analyze_all_sessions(base_path)
+
+        # Parse date filters
+        from ..utils.time_utils import TimeUtils
+        parsed_start_date = TimeUtils.parse_date_string(start_date) if start_date else None
+        parsed_end_date = TimeUtils.parse_date_string(end_date) if end_date else None
+
+        project_breakdown = self.analyzer.create_project_breakdown(
+            sessions, timeframe, parsed_start_date, parsed_end_date
+        )
+
+        report_data = {
+            'type': 'projects_breakdown',
+            'project_breakdown': project_breakdown,
+            'filter': {
+                'timeframe': timeframe,
+                'start_date': start_date,
+                'end_date': end_date
+            }
+        }
+
+        if output_format == "table":
+            self._display_projects_breakdown_table(project_breakdown)
+        elif output_format == "json":
+            return self._format_projects_breakdown_json(project_breakdown)
+        elif output_format == "csv":
+            return self._format_projects_breakdown_csv(project_breakdown)
+
+        return report_data
+
     # Table display methods
     def _display_single_session_table(self, session: SessionData, stats: Dict[str, Any], health: Dict[str, Any]):
         """Display single session report as table."""
@@ -330,6 +375,47 @@ class ReportGenerator:
         """Display models breakdown as table."""
         table = self.table_formatter.create_model_breakdown_table(model_breakdown.model_stats)
         self.console.print(table)
+
+    def _display_projects_breakdown_table(self, project_breakdown: ProjectBreakdownReport):
+        """Display projects breakdown as table."""
+        from rich.table import Table
+        table = Table(title="Project Usage Breakdown", show_header=True)
+
+        table.add_column("Project", style="cyan")
+        table.add_column("Sessions", justify="right", style="green")
+        table.add_column("Interactions", justify="right", style="green")
+        table.add_column("Total Tokens", justify="right", style="bold blue")
+        table.add_column("Cost", justify="right", style="red")
+        table.add_column("Models Used", style="dim cyan")
+
+        for project in project_breakdown.project_stats:
+            # Truncate models list if too long
+            models_display = ", ".join(project.models_used)
+            if len(models_display) > 40:
+                models_display = models_display[:37] + "..."
+            
+            table.add_row(
+                project.project_name,
+                f"{project.total_sessions}",
+                f"{project.total_interactions}",
+                f"{project.total_tokens.total:,}",
+                f"${project.total_cost:.4f}",
+                models_display
+            )
+
+        self.console.print(table)
+
+        # Add summary
+        from rich.panel import Panel
+        summary_text = (
+            f"Total: {len(project_breakdown.project_stats)} projects, "
+            f"{sum(p.total_sessions for p in project_breakdown.project_stats)} sessions, "
+            f"{sum(p.total_interactions for p in project_breakdown.project_stats)} interactions, "
+            f"{project_breakdown.total_tokens.total:,} tokens, "
+            f"${project_breakdown.total_cost:.2f}"
+        )
+        summary_panel = Panel(summary_text, title="Summary", border_style="green")
+        self.console.print(summary_panel)
 
     # JSON formatting methods
     def _format_single_session_json(self, session: SessionData, stats: Dict[str, Any], health: Dict[str, Any]) -> Dict[str, Any]:
@@ -563,4 +649,47 @@ class ReportGenerator:
                 'last_used': model.last_used.isoformat() if model.last_used else None
             }
             for model in model_breakdown.model_stats
+        ]
+
+    def _format_projects_breakdown_json(self, project_breakdown: ProjectBreakdownReport) -> Dict[str, Any]:
+        """Format projects breakdown as JSON."""
+        return {
+            'timeframe': project_breakdown.timeframe,
+            'start_date': project_breakdown.start_date.isoformat() if project_breakdown.start_date else None,
+            'end_date': project_breakdown.end_date.isoformat() if project_breakdown.end_date else None,
+            'total_cost': float(project_breakdown.total_cost),
+            'total_tokens': project_breakdown.total_tokens.model_dump(),
+            'projects': [
+                {
+                    'project_name': project.project_name,
+                    'sessions': project.total_sessions,
+                    'interactions': project.total_interactions,
+                    'tokens': project.total_tokens.model_dump(),
+                    'cost': float(project.total_cost),
+                    'models_used': project.models_used,
+                    'first_activity': project.first_activity.isoformat() if project.first_activity else None,
+                    'last_activity': project.last_activity.isoformat() if project.last_activity else None
+                }
+                for project in project_breakdown.project_stats
+            ]
+        }
+
+    def _format_projects_breakdown_csv(self, project_breakdown: ProjectBreakdownReport) -> List[Dict[str, Any]]:
+        """Format projects breakdown for CSV export."""
+        return [
+            {
+                'project_name': project.project_name,
+                'sessions': project.total_sessions,
+                'interactions': project.total_interactions,
+                'input_tokens': project.total_tokens.input,
+                'output_tokens': project.total_tokens.output,
+                'cache_write_tokens': project.total_tokens.cache_write,
+                'cache_read_tokens': project.total_tokens.cache_read,
+                'total_tokens': project.total_tokens.total,
+                'cost': float(project.total_cost),
+                'models_used': ', '.join(project.models_used),
+                'first_activity': project.first_activity.isoformat() if project.first_activity else None,
+                'last_activity': project.last_activity.isoformat() if project.last_activity else None
+            }
+            for project in project_breakdown.project_stats
         ]

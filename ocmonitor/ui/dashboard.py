@@ -32,46 +32,40 @@ class DashboardUI:
         """Create header panel with session info."""
         current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        header_text = f"""[bold blue]OpenCode Live Dashboard[/bold blue]
-[cyan]Session:[/cyan] {session.session_id}
-[cyan]Last Update:[/cyan] {current_time}
-[cyan]Interactions:[/cyan] {session.interaction_count}"""
+        header_text = f"""[bold blue]OpenCode Live Dashboard[/bold blue]  [dim]Project:[/dim] [bold cyan]{session.project_name}[/bold cyan]  [dim]Session:[/dim] [bold white]{session.display_title}[/bold white]  [dim]Updated:[/dim] [bold white]{current_time}[/bold white]  [dim]Interactions:[/dim] [bold white]{session.interaction_count}[/bold white]"""
 
         return Panel(
             header_text,
-            title="📊 Dashboard",
+            title="Dashboard",
             title_align="left",
-            border_style="blue"
+            border_style="dim blue"
         )
 
     def create_token_panel(self, session: SessionData, recent_file: Optional[Any] = None) -> Panel:
         """Create token consumption panel."""
         session_tokens = session.total_tokens
 
-        # Recent interaction info
-        recent_info = ""
+        # Create compact horizontal layout
         if recent_file:
-            recent_info = f"""
-[bold]Recent Interaction:[/bold]
-  Input:      {recent_file.tokens.input:,}
-  Output:     {recent_file.tokens.output:,}
-  Cache W:    {recent_file.tokens.cache_write:,}
-  Cache R:    {recent_file.tokens.cache_read:,}
-"""
+            token_text = f"""[bold blue]Recent Interaction[/bold blue]
+[dim]Input:[/dim] [bold white]{recent_file.tokens.input:,}[/bold white]    [dim]Cache W:[/dim] [bold white]{recent_file.tokens.cache_write:,}[/bold white]
+[dim]Output:[/dim] [bold white]{recent_file.tokens.output:,}[/bold white]   [dim]Cache R:[/dim] [bold white]{recent_file.tokens.cache_read:,}[/bold white]
 
-        token_text = f"""{recent_info}
-[bold]Session Totals:[/bold]
-  Input:      {session_tokens.input:,}
-  Output:     {session_tokens.output:,}
-  Cache W:    {session_tokens.cache_write:,}
-  Cache R:    {session_tokens.cache_read:,}
-  [bold blue]Total:      {session_tokens.total:,}[/bold blue]"""
+[bold blue]Session Totals[/bold blue]
+[dim]Input:[/dim] [bold white]{session_tokens.input:,}[/bold white]    [dim]Cache W:[/dim] [bold white]{session_tokens.cache_write:,}[/bold white]
+[dim]Output:[/dim] [bold white]{session_tokens.output:,}[/bold white]   [dim]Cache R:[/dim] [bold white]{session_tokens.cache_read:,}[/bold white]
+[dim]Total:[/dim] [bold cyan]{session_tokens.total:,}[/bold cyan]"""
+        else:
+            token_text = f"""[bold blue]Session Totals[/bold blue]
+[dim]Input:[/dim] [bold white]{session_tokens.input:,}[/bold white]    [dim]Cache W:[/dim] [bold white]{session_tokens.cache_write:,}[/bold white]
+[dim]Output:[/dim] [bold white]{session_tokens.output:,}[/bold white]   [dim]Cache R:[/dim] [bold white]{session_tokens.cache_read:,}[/bold white]
+[dim]Total:[/dim] [bold cyan]{session_tokens.total:,}[/bold cyan]"""
 
         return Panel(
             token_text,
-            title="🎯 Token Consumption",
+            title="Tokens",
             title_align="left",
-            border_style="green"
+            border_style="dim white"
         )
 
     def create_cost_panel(self, session: SessionData, pricing_data: Dict[str, Any],
@@ -79,23 +73,25 @@ class DashboardUI:
         """Create cost tracking panel."""
         total_cost = session.calculate_total_cost(pricing_data)
 
-        cost_text = f"[bold red]Session Cost: ${total_cost:.2f}[/bold red]\n"
-
         if quota:
             percentage = min(100, float(total_cost / quota) * 100)
-            progress_bar = self.create_progress_bar(percentage)
+            progress_bar = self.create_compact_progress_bar(percentage)
             cost_color = self.get_cost_color(percentage)
 
-            cost_text += f"[bold]Quota: ${quota:.2f}[/bold]\n"
-            cost_text += f"[{cost_color}]{progress_bar}[/{cost_color}]"
+            cost_text = f"""[bold blue]Cost Tracking[/bold blue]
+[dim]Session:[/dim] [bold white]${total_cost:.2f}[/bold white]
+[dim]Quota:[/dim] [bold white]${quota:.2f}[/bold white]
+[{cost_color}]{progress_bar}[/{cost_color}]"""
         else:
-            cost_text += "[dim]No quota configured[/dim]"
+            cost_text = f"""[bold blue]Cost Tracking[/bold blue]
+[dim]Session:[/dim] [bold white]${total_cost:.2f}[/bold white]
+[dim]No quota configured[/dim]"""
 
         return Panel(
             cost_text,
-            title="💰 Cost Tracking",
+            title="Cost",
             title_align="left",
-            border_style="red"
+            border_style="dim white"
         )
 
     def create_model_panel(self, session: SessionData, pricing_data: Dict[str, Any]) -> Panel:
@@ -103,24 +99,24 @@ class DashboardUI:
         model_breakdown = session.get_model_breakdown(pricing_data)
 
         if not model_breakdown:
-            return Panel("No model data", title="🤖 Models", border_style="yellow")
+            return Panel("[dim]No model data available[/dim]", title="Models", border_style="dim white")
 
         model_lines = []
         for model, stats in model_breakdown.items():
-            model_name = model[:20] + "..." if len(model) > 23 else model
+            model_name = model[:25] + "..." if len(model) > 28 else model
             model_lines.append(
-                f"[yellow]{model_name}[/yellow]: "
-                f"{stats['tokens'].total:,} tokens, "
-                f"${stats['cost']:.2f}"
+                f"[dim]{model_name}[/dim]  "
+                f"[bold white]{stats['tokens'].total:,}[/bold white] [dim cyan]tokens[/dim cyan]  "
+                f"[bold white]${stats['cost']:.2f}[/bold white]"
             )
 
         model_text = "\n".join(model_lines)
 
         return Panel(
             model_text,
-            title="🤖 Model Usage",
+            title="Models",
             title_align="left",
-            border_style="yellow"
+            border_style="dim white"
         )
 
     def create_context_panel(self, recent_file: Optional[Any],
@@ -128,9 +124,9 @@ class DashboardUI:
         """Create context window status panel."""
         if not recent_file:
             return Panel(
-                "No recent interaction",
-                title="🧠 Context Window",
-                border_style="purple"
+                "[dim]No recent interaction[/dim]",
+                title="Context",
+                border_style="dim white"
             )
 
         # Calculate context size (input + cache read + cache write from most recent)
@@ -139,18 +135,18 @@ class DashboardUI:
                        recent_file.tokens.cache_write)
 
         percentage = min(100, (context_size / context_window) * 100)
-        progress_bar = self.create_progress_bar(percentage)
+        progress_bar = self.create_compact_progress_bar(percentage, 12)
         context_color = self.get_context_color(percentage)
 
-        context_text = f"""[bold]Current Size:[/bold] {context_size:,} tokens
-[bold]Window Size:[/bold] {context_window:,} tokens
+        context_text = f"""[dim]Size:[/dim] [bold white]{context_size:,}[/bold white]
+[dim]Window:[/dim] [bold white]{context_window:,}[/bold white]
 [{context_color}]{progress_bar}[/{context_color}]"""
 
         return Panel(
             context_text,
-            title="🧠 Context Window",
+            title="Context",
             title_align="left",
-            border_style="purple"
+            border_style="dim white"
         )
 
     def create_burn_rate_panel(self, burn_rate: float) -> Panel:
@@ -158,44 +154,84 @@ class DashboardUI:
         if burn_rate == 0:
             burn_text = "[dim]No recent activity[/dim]"
         else:
-            burn_text = f"[bold green]{burn_rate:,.0f} tokens/minute[/bold green]"
-
-            # Add trend indicator
+            # Add level indicator
             if burn_rate > 10000:
-                burn_text += " 🔥"
+                level = "[red][HIGH][/red]"
             elif burn_rate > 5000:
-                burn_text += " ⚡"
+                level = "[yellow][MED][/yellow]"
             else:
-                burn_text += " 📈"
+                level = "[green][LOW][/green]"
+            
+            burn_text = f"""[bold white]{burn_rate:,.0f}[/bold white] [dim cyan]tok/min[/dim cyan]
+{level}"""
 
         return Panel(
             burn_text,
-            title="⚡ Token Burn Rate",
+            title="Rate",
             title_align="left",
-            border_style="cyan"
+            border_style="dim white"
+        )
+
+    def create_session_time_panel(self, session: SessionData) -> Panel:
+        """Create session time progress panel with 5-hour maximum."""
+        if not session.start_time:
+            return Panel(
+                "[dim]No session timing data[/dim]",
+                title="Session Time",
+                border_style="dim white"
+            )
+
+        duration_hours = session.duration_hours
+        percentage = session.duration_percentage
+        max_hours = 5.0
+        
+        # Format duration display
+        if duration_hours < 1:
+            duration_display = f"{duration_hours * 60:.0f}m"
+        else:
+            duration_display = f"{duration_hours:.1f}h"
+        
+        # Create progress bar with time-based colors
+        progress_bar = self.create_compact_progress_bar(percentage, 12)
+        time_color = self.get_time_color(percentage)
+        
+        time_text = f"""[dim]Duration:[/dim] [bold white]{duration_display}[/bold white]
+[dim]Max:[/dim] [bold white]{max_hours:.0f}h[/bold white]
+[{time_color}]{progress_bar}[/{time_color}]"""
+
+        return Panel(
+            time_text,
+            title="Session Time",
+            title_align="left",
+            border_style="dim white"
         )
 
     def create_recent_file_panel(self, recent_file: Optional[Any]) -> Panel:
         """Create recent file info panel."""
         if not recent_file:
             return Panel(
-                "No recent files",
-                title="📄 Recent Interaction",
-                border_style="white"
+                "[dim]No recent files[/dim]",
+                title="Recent",
+                border_style="dim white"
             )
 
-        file_text = f"""[bold]File:[/bold] {recent_file.file_name}
-[bold]Model:[/bold] {recent_file.model_id}"""
+        # Truncate file name if too long
+        file_name = recent_file.file_name
+        if len(file_name) > 20:
+            file_name = "..." + file_name[-17:]
+
+        file_text = f"""[dim]File:[/dim] [bold white]{file_name}[/bold white]
+[dim]Model:[/dim] [bold white]{recent_file.model_id[:15]}[/bold white]"""
 
         if recent_file.time_data and recent_file.time_data.duration_ms:
             duration = self.format_duration(recent_file.time_data.duration_ms)
-            file_text += f"\n[bold]Duration:[/bold] {duration}"
+            file_text += f"\n[dim]Duration:[/dim] [bold white]{duration}[/bold white]"
 
         return Panel(
             file_text,
-            title="📄 Recent Interaction",
+            title="Recent",
             title_align="left",
-            border_style="white"
+            border_style="dim white"
         )
 
     def create_dashboard_layout(self, session: SessionData, recent_file: Optional[Any],
@@ -212,30 +248,33 @@ class DashboardUI:
         model_panel = self.create_model_panel(session, pricing_data)
         context_panel = self.create_context_panel(recent_file, context_window)
         burn_rate_panel = self.create_burn_rate_panel(burn_rate)
+        session_time_panel = self.create_session_time_panel(session)
         recent_file_panel = self.create_recent_file_panel(recent_file)
 
-        # Setup layout structure
+        # Setup new 4-section layout structure
         layout.split_column(
-            Layout(header, size=5),
-            Layout(name="main", ratio=1)
+            Layout(header, size=3),                    # Compact header
+            Layout(name="primary", minimum_size=8),    # Main metrics
+            Layout(name="secondary", size=6),          # Compact metrics
+            Layout(name="models", minimum_size=4)      # Model breakdown
         )
 
-        layout["main"].split_row(
-            Layout(name="left", ratio=1),
-            Layout(name="right", ratio=1)
+        # Primary section: Token usage (60%) and Cost tracking (40%)
+        layout["primary"].split_row(
+            Layout(token_panel, ratio=3),              # 60% for token data
+            Layout(cost_panel, ratio=2)                # 40% for cost data
         )
 
-        layout["left"].split_column(
-            token_panel,
-            cost_panel,
-            burn_rate_panel
+        # Secondary section: Four compact panels
+        layout["secondary"].split_row(
+            Layout(context_panel, ratio=1),
+            Layout(burn_rate_panel, ratio=1),
+            Layout(session_time_panel, ratio=1),
+            Layout(recent_file_panel, ratio=1)
         )
 
-        layout["right"].split_column(
-            model_panel,
-            context_panel,
-            recent_file_panel
-        )
+        # Models section: Full width for model breakdown
+        layout["models"].update(model_panel)
 
         return layout
 
@@ -244,6 +283,12 @@ class DashboardUI:
         filled = int(width * percentage / 100)
         bar = '█' * filled + '░' * (width - filled)
         return f"[{bar}] {percentage:.1f}%"
+
+    def create_compact_progress_bar(self, percentage: float, width: int = 20) -> str:
+        """Create a compact progress bar for space-efficient display."""
+        filled = int(width * percentage / 100)
+        bar = '▌' * filled + '░' * (width - filled)
+        return f"{bar} {percentage:.0f}%"
 
     def get_cost_color(self, percentage: float) -> str:
         """Get color for cost based on percentage."""
@@ -263,6 +308,17 @@ class DashboardUI:
         elif percentage >= 85:
             return "yellow"
         elif percentage >= 70:
+            return "orange"
+        else:
+            return "green"
+
+    def get_time_color(self, percentage: float) -> str:
+        """Get color for session time based on percentage of 5-hour max."""
+        if percentage >= 90:
+            return "red"
+        elif percentage >= 75:
+            return "yellow"
+        elif percentage >= 50:
             return "orange"
         else:
             return "green"
