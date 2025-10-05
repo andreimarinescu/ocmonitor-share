@@ -28,29 +28,43 @@ class TimeUtils:
 
     @staticmethod
     def format_duration(milliseconds: Optional[int]) -> str:
-        """Format duration in milliseconds to a readable format.
+        """Format duration in milliseconds to hours and minutes format (e.g., "1h 30m").
 
         Args:
             milliseconds: Duration in milliseconds
 
         Returns:
-            Formatted duration string
+            Formatted duration string in "Xh Ym" format
+        """
+        return TimeUtils.format_duration_hm(milliseconds)
+
+    @staticmethod
+    def format_duration_hm(milliseconds: Optional[int]) -> str:
+        """Format duration in milliseconds to hours and minutes format (e.g., "1h 30m").
+
+        Args:
+            milliseconds: Duration in milliseconds
+
+        Returns:
+            Formatted duration string in "Xh Ym" format
         """
         if milliseconds is None or milliseconds < 0:
             return 'N/A'
 
-        if milliseconds < 1000:
-            return f"{milliseconds}ms"
+        total_seconds = milliseconds / 1000
+        total_minutes = total_seconds / 60
 
-        seconds = milliseconds / 1000
-        if seconds < 60:
-            return f"{seconds:.2f}s"
-        elif seconds < 3600:
-            minutes = seconds / 60
-            return f"{minutes:.2f}m"
+        if total_minutes < 1:
+            return f"{total_seconds:.0f}s"
+        elif total_minutes < 60:
+            return f"{total_minutes:.0f}m"
         else:
-            hours = seconds / 3600
-            return f"{hours:.2f}h"
+            hours = int(total_minutes // 60)
+            minutes = int(total_minutes % 60)
+            if minutes == 0:
+                return f"{hours}h"
+            else:
+                return f"{hours}h {minutes}m"
 
     @staticmethod
     def parse_date_string(date_str: str) -> Optional[date]:

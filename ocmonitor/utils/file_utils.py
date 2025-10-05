@@ -142,17 +142,17 @@ class FileProcessor:
         if not session_storage.exists():
             return None
         
-        # Search through all project directories
+        # Search through all project directories (including global)
         for project_dir in session_storage.iterdir():
-            if not project_dir.is_dir() or project_dir.name == "global":
+            if not project_dir.is_dir():
                 continue
-            
+
             session_file = project_dir / f"{session_id}.json"
             if session_file.exists():
                 session_data = FileProcessor.load_json_file(session_file)
                 if session_data and "title" in session_data:
                     return session_data["title"]
-        
+
         return None
 
     @staticmethod

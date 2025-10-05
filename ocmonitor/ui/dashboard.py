@@ -15,6 +15,7 @@ from rich.live import Live
 from rich.layout import Layout
 
 from ..models.session import SessionData, TokenUsage
+from ..utils.time_utils import TimeUtils
 
 
 class DashboardUI:
@@ -181,15 +182,18 @@ class DashboardUI:
                 border_style="dim white"
             )
 
-        duration_hours = session.duration_hours
-        percentage = session.duration_percentage
+        # Calculate duration from start_time to now (updates continuously even when idle)
+        current_time = datetime.now()
+        session_duration = current_time - session.start_time
+        duration_ms = int(session_duration.total_seconds() * 1000)
+
+        # Calculate percentage based on 5-hour maximum
         max_hours = 5.0
-        
-        # Format duration display
-        if duration_hours < 1:
-            duration_display = f"{duration_hours * 60:.0f}m"
-        else:
-            duration_display = f"{duration_hours:.1f}h"
+        duration_hours = session_duration.total_seconds() / 3600
+        percentage = min(100.0, (duration_hours / max_hours) * 100.0)
+
+        # Format duration display using hours and minutes format
+        duration_display = TimeUtils.format_duration_hm(duration_ms)
         
         # Create progress bar with time-based colors
         progress_bar = self.create_compact_progress_bar(percentage, 12)
@@ -324,19 +328,8 @@ class DashboardUI:
             return "green"
 
     def format_duration(self, milliseconds: int) -> str:
-        """Format duration in milliseconds to readable format."""
-        if milliseconds < 1000:
-            return f"{milliseconds}ms"
-
-        seconds = milliseconds / 1000
-        if seconds < 60:
-            return f"{seconds:.1f}s"
-        elif seconds < 3600:
-            minutes = seconds / 60
-            return f"{minutes:.1f}m"
-        else:
-            hours = seconds / 3600
-            return f"{hours:.1f}h"
+        """Format duration in milliseconds to hours and minutes format."""
+        return TimeUtils.format_duration_hm(milliseconds)
 
     def clear_screen(self):
         """Clear the terminal screen."""

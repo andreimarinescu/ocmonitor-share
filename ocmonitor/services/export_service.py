@@ -195,6 +195,8 @@ class ExportService:
                 return [
                     {
                         'session_id': session.session_id,
+                        'session_title': session.session_title,
+                        'project_name': session.project_name,
                         'file_name': file.file_name,
                         'model_id': file.model_id,
                         'input_tokens': file.tokens.input,
@@ -218,6 +220,8 @@ class ExportService:
             return [
                 {
                     'session_id': session.session_id,
+                    'session_title': session.session_title,
+                    'project_name': session.project_name,
                     'start_time': session.start_time.isoformat() if session.start_time else None,
                     'end_time': session.end_time.isoformat() if session.end_time else None,
                     'duration_ms': session.duration_ms,

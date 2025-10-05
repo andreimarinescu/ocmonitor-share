@@ -422,6 +422,8 @@ class ReportGenerator:
         """Format single session data as JSON."""
         return {
             'session_id': session.session_id,
+            'session_title': session.session_title,
+            'project_name': session.project_name,
             'statistics': {
                 'interaction_count': stats['interaction_count'],
                 'total_tokens': stats['total_tokens'].model_dump(),
@@ -454,6 +456,8 @@ class ReportGenerator:
             'sessions': [
                 {
                     'session_id': session.session_id,
+                    'session_title': session.session_title,
+                    'project_name': session.project_name,
                     'interaction_count': session.interaction_count,
                     'total_tokens': session.total_tokens.model_dump(),
                     'total_cost': float(session.calculate_total_cost(self.analyzer.pricing_data)),
@@ -542,6 +546,9 @@ class ReportGenerator:
         """Format single session data for CSV export."""
         return [
             {
+                'session_id': session.session_id,
+                'session_title': session.session_title,
+                'project_name': session.project_name,
                 'file_name': file.file_name,
                 'model_id': file.model_id,
                 'input_tokens': file.tokens.input,
@@ -563,6 +570,8 @@ class ReportGenerator:
             for model, stats in model_breakdown.items():
                 rows.append({
                     'session_id': session.session_id,
+                    'session_title': session.session_title,
+                    'project_name': session.project_name,
                     'start_time': session.start_time.isoformat() if session.start_time else None,
                     'duration_ms': session.duration_ms,
                     'model': model,

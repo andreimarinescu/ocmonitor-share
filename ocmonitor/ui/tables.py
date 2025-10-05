@@ -11,6 +11,7 @@ from rich.progress import Progress, BarColumn, TextColumn, TimeRemainingColumn
 
 from ..models.session import SessionData, TokenUsage
 from ..models.analytics import DailyUsage, WeeklyUsage, MonthlyUsage, ModelUsageStats
+from ..utils.time_utils import TimeUtils
 
 
 class TableFormatter:
@@ -66,6 +67,7 @@ class TableFormatter:
         # Add columns
         table.add_column("Started", style="cyan", no_wrap=True)
         table.add_column("Duration", style="cyan", no_wrap=True)
+        table.add_column("Session", style="magenta", max_width=35)
         table.add_column("Model", style="yellow", max_width=25)
         table.add_column("Interactions", justify="right", style="green")
         table.add_column("Input Tokens", justify="right", style="blue")
@@ -101,9 +103,14 @@ class TableFormatter:
                 if i == 0:
                     start_time = session.start_time.strftime('%Y-%m-%d %H:%M:%S') if session.start_time else 'N/A'
                     duration = self._format_duration(session.duration_ms) if session.duration_ms else 'N/A'
+                    session_display = session.display_title
+                    # Truncate if too long for display
+                    if len(session_display) > 35:
+                        session_display = session_display[:32] + "..."
                 else:
                     start_time = ""
                     duration = ""
+                    session_display = ""
 
                 # Format model name
                 model_text = Text(model)
@@ -116,6 +123,7 @@ class TableFormatter:
                 table.add_row(
                     start_time,
                     duration,
+                    session_display,
                     model_text,
                     self.format_number(stats['files']),
                     self.format_number(stats['tokens'].input),
@@ -129,6 +137,7 @@ class TableFormatter:
         table.add_row(
             Text("TOTALS", style="bold white"),
             "",
+            "",  # Empty session column
             Text(f"{len(sorted_sessions)} sessions", style="bold white"),
             Text(self.format_number(total_interactions), style="bold green"),
             Text(self.format_number(total_tokens.input), style="bold blue"),
@@ -142,7 +151,7 @@ class TableFormatter:
     def create_session_table(self, session: SessionData, pricing_data: Dict[str, Any]) -> Table:
         """Create a table for a single session."""
         table = Table(
-            title=f"Session: {session.session_id}",
+            title=f"Session: {session.display_title}",
             show_header=True,
             header_style="bold blue",
             title_style="bold magenta"
@@ -317,19 +326,8 @@ class TableFormatter:
         return f"[{bar}] {percentage:.1f}%"
 
     def _format_duration(self, milliseconds: int) -> str:
-        """Format duration in milliseconds to readable format."""
-        if milliseconds < 1000:
-            return f"{milliseconds}ms"
-
-        seconds = milliseconds / 1000
-        if seconds < 60:
-            return f"{seconds:.1f}s"
-        elif seconds < 3600:
-            minutes = seconds / 60
-            return f"{minutes:.1f}m"
-        else:
-            hours = seconds / 3600
-            return f"{hours:.1f}h"
+        """Format duration in milliseconds to hours and minutes format."""
+        return TimeUtils.format_duration_hm(milliseconds)
 
     def create_summary_panel(self, sessions: List[SessionData], pricing_data: Dict[str, Any]) -> Panel:
         """Create a summary panel with key metrics."""
